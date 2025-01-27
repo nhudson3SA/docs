@@ -1,0 +1,1962 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: "Lead Managementment Platform (LMP) Lead Submit/Consent API"
+  description: The Lead Submit/Consent API provides a middleware between systems that generate leads and systems responsible for auctioning/selling leads to partners
+
+paths:
+  /auction/leads:
+    post:
+      summary: Send new lead to auction to get interested partners
+      description: Send new lead to auction to get interested partners
+      tags:
+        - auction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/HomeImprovementLeadAuctionRequest"
+                - $ref: "#/components/schemas/AutoLeadAuctionRequest"
+                - $ref: "#/components/schemas/MovingLeadAuctionRequest"
+                - $ref: "#/components/schemas/SolarLeadAuctionRequest"
+              discriminator:
+                propertyName: leadTypeId
+                mapping:
+                  18: HomeImprovementLeadAuctionRequest
+                  59: AutoLeadAuctionRequest
+                  55: MovingLeadAuctionRequest
+                  53: SolarLeadAuctionRequest
+      responses:
+        "201":
+          description: Lead was successfully created and sent to auction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadAuctionResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadErrorResponse"
+        "401":
+          description: Invalid API Key was given
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+  /auction/leads/{leadId}/consent:
+    post:
+      summary: Send list of providers that user consents to be contacted from
+      description: Send list of providers that user consents to be contacted from
+      tags:
+        - auction
+      parameters:
+        - in: path
+          name: leadId
+          description: Identifier assigned to the lead
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/HomeImprovementLeadConsentRequest"
+                - $ref: "#/components/schemas/AutoLeadConsentRequest"
+                - $ref: "#/components/schemas/MovingLeadConsentRequest"
+                - $ref: "#/components/schemas/SolarLeadConsentRequest"
+      responses:
+        "200":
+          description: Lead consent was successfully sent to auction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadConsentResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadErrorResponse"
+        "401":
+          description: Invalid API Key was given
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+  /auction/leads/{leadId}/children:
+    post:
+      summary: Send children leads associated with the parent lead to auction
+      description: Send children leads associated with the parent lead to auction
+      tags:
+        - auction
+      parameters:
+        - in: path
+          name: leadId
+          description: Identifier assigned to the parent lead
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/HomeImprovementChildrenAuctionRequest"
+      responses:
+        "201":
+          description: Children leads were successfully created and sent to auction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadAuctionResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadErrorResponse"
+        "401":
+          description: Invalid API Key was given
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+  /auction/leads/{leadId}/children/consent:
+    post:
+      summary: Send providers that user consents to be contacted from
+      description: Send providers that user consents to be contacted from
+      tags:
+        - auction
+      parameters:
+        - in: path
+          name: leadId
+          description: Identifier assigned to the lead
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/HomeImprovementChildrenConsentRequest"
+      responses:
+        "201":
+          description: Children leads were successfully created and sent to auction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadAuctionResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadErrorResponse"
+        "401":
+          description: Invalid API Key was given
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedResponse"
+
+components:
+  schemas:
+    AutoLeadAuctionRequest:
+      description: Auto lead information to send to auction
+      type: object
+      required:
+        - src
+        - leadTypeId
+        - ipAddress
+        - state
+        - zip
+        - vehicleYear
+        - vehicleMake
+        - vehicleModel
+        - dateOfBirth
+      properties:
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadTypeId:
+          type: string
+          enum: [59]
+          example: 59
+          description: The identifier of the lead type
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        state:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: NC
+          description: State that the lead is in
+        zip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is in
+        vehicleYear:
+          type: integer
+          example: 2024
+          description: Year of the vehicle
+        vehicleMake:
+          type: string
+          example: Ford
+          description: Make of the vehicle
+        vehicleModel:
+          type: string
+          example: Mustang
+          description: Model of the vehicle
+        dateOfBirth:
+          type: string
+          pattern: '^\d{2}/\d{2}/\d{4}$'
+          example: 12/23/1980
+          description: Date of birth of the lead (mm/dd/yyyy)
+        estCreditScore:
+          type: integer
+          pattern: '^\d{3}$'
+          example: 700
+          description: Estimated credit score of the lead
+
+    HomeImprovementLeadAuctionRequestBase:
+      description: Home improvement lead information to send to auction
+      type: object
+      required:
+        - src
+        - leadTypeId
+        - ipAddress
+        - state
+        - zip
+        - homeowner
+      properties:
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadTypeId:
+          type: string
+          enum: [18]
+          example: 18
+          description: The identifier of the lead type
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        state:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: NC
+          description: State that the lead is in
+        zip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is in
+        projectValue:
+          type: string
+          example: gutter_installation
+          description: The project value that the lead is interested in
+        homeowner:
+          type: boolean
+          description: Indicator whether or not the lead is a homeowner
+
+    HomeImprovementLeadAuctionRequest:
+      allOf:
+        - $ref: "#/components/schemas/HomeImprovementLeadAuctionRequestBase"
+      required:
+        - project
+      properties:
+        project:
+          type: string
+          example: Electrical - Switches
+          description: The project that the lead is interested in
+
+    HomeImprovementChildrenAuctionRequest:
+      allOf:
+        - $ref: "#/components/schemas/HomeImprovementLeadAuctionRequestBase"
+      required:
+        - childProjects
+      properties:
+        childProjects:
+          type: array
+          example:
+            [Electrical - Switches, Outlets & Fixtures - Install or Repair]
+          items:
+            type: string
+            description: The projects that the child lead is interested in
+
+    MovingLeadAuctionRequest:
+      description: Moving lead information to send to auction
+      type: object
+      required:
+        - src
+        - leadTypeId
+        - originZip
+        - destinationZip
+      properties:
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadTypeId:
+          type: string
+          enum: [55]
+          example: 55
+          description: The identifier of the lead type
+        originZip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is moving from
+        destinationZip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is moving to
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        landingPage:
+          type: string
+          description: The site where the lead form was completed
+        firstName:
+          type: string
+          description: First name of the lead
+        lastName:
+          type: string
+          description: Last name of the lead
+        primaryPhone:
+          type: string
+          pattern: '^\d{10}$'
+          example: 4048675309
+          description: The primary phone number of the lead
+        email:
+          type: string
+          maxLength: 100
+          example: test@nags.us
+          description: Valid email address
+
+    SolarLeadAuctionRequest:
+      description: Solar lead information to send to auction
+      type: object
+      required:
+        - src
+        - leadTypeId
+        - ipAddress
+        - tcpa
+        - state
+        - zip
+        - residenceOwnership
+        - shade
+        - monthlyElectricBill
+        - credit
+        - utilityProvider
+      properties:
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadTypeId:
+          type: string
+          enum: [53]
+          example: 53
+          description: The identifier of the lead type
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        tcpa:
+          type: boolean
+          description: Indicator whether or not the lead has given TCPA consent
+        state:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: NC
+          description: State that the lead is in
+        zip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is in
+        residenceOwnership:
+          type: string
+          enum: [Own, Rent, NA]
+          example: Own
+          description: Indicator whether the lead owns or rents their residence
+        shade:
+          type: string
+          enum: [No Shade, A Little Shade, A Lot Of Shade, Uncertain, NA]
+          example: No Shade
+          description: Amount of shade the lead has at their residence
+        monthlyElectricBill:
+          type: string
+          enum: [$0-$99, $100-$300, $300+]
+          example: $0-$99
+          description: The monthly electric bill of the lead
+        credit:
+          type: string
+          enum: [Poor, Fair, Good, Excellent, NA]
+          example: Excellent
+          description: Credit rating of the lead
+        utilityProvider:
+          type: string
+          example: Duke Energy Carolinas
+          description: The utility provider of the lead
+
+    AutoLeadConsentRequest:
+      description: Request containing list of interests that lead consents to be contacted from
+      type: object
+      required:
+        - interestIds
+        - src
+        - leadId
+        - leadTypeId
+        - ipAddress
+        - landingPage
+        - firstName
+        - lastName
+        - address
+        - city
+        - state
+        - zip
+        - email
+        - primaryPhone
+        - vehicleYear
+        - vehicleMake
+        - vehicleModel
+        - dateOfBirth
+      properties:
+        interestIds:
+          type: array
+          items:
+            type: string
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadId:
+          type: string
+          example: 3637
+          description: Identifier assigned to the lead
+        leadTypeId:
+          type: string
+          example: 59
+          description: The identifier of the lead type
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        landingPage:
+          type: string
+          description: The site where the lead form was completed
+        firstName:
+          type: string
+          description: First name of the lead
+        lastName:
+          type: string
+          description: Last name of the lead
+        address:
+          type: string
+          description: Address that the lead is in
+        city:
+          type: string
+          description: City that the lead is in
+        state:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: NC
+          description: State that the lead is in
+        zip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is in
+        email:
+          type: string
+          maxLength: 100
+          example: test@nags.us
+          description: Valid email address
+        primaryPhone:
+          type: string
+          pattern: '^\d{10}$'
+          example: 4048675309
+          description: The primary phone number of the lead
+        vehicleYear:
+          type: integer
+          example: 2024
+          description: Year of the vehicle
+        vehicleMake:
+          type: string
+          example: Ford
+          description: Make of the vehicle
+        vehicleModel:
+          type: string
+          example: Mustang
+          description: Model of the vehicle
+        dateOfBirth:
+          type: string
+          pattern: '^\d{2}/\d{2}/\d{4}$'
+          example: 12/23/1980
+          description: Date of birth of the lead (mm/dd/yyyy)
+
+    HomeImprovementLeadConsentRequest:
+      description: Request containing list of interests that lead consents to be contacted from
+      type: object
+      required:
+        - interestIds
+        - src
+        - leadTypeId
+        - project
+        - ipAddress
+        - state
+        - zip
+        - homeowner
+        - landingPage
+        - firstName
+        - lastName
+        - primaryPhone
+        - city
+      properties:
+        bidIds:
+          deprecated: true
+          description: Deprecated field in favor of interestIds
+          type: array
+          items:
+            type: string
+        interestIds:
+          type: array
+          items:
+            type: string
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadTypeId:
+          type: string
+          example: 18
+          description: The identifier of the lead type
+        landingPage:
+          type: string
+          description: The site where the lead form was completed
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        firstName:
+          type: string
+          description: First name of the lead
+        lastName:
+          type: string
+          description: Last name of the lead
+        primaryPhone:
+          type: string
+          pattern: '^\d{10}$'
+          example: 4048675309
+          description: The primary phone number of the lead
+        city:
+          type: string
+          description: City that the lead is in
+        state:
+          type: string
+          example: NC
+          description: State that the lead is in.  If not provided, the API will retrieve this value from the created lead.
+        zip:
+          type: string
+          example: 27513
+          description: Zip code that the lead is in.  If not provided, the API will retrieve this value from the created lead.
+        project:
+          type: string
+          example: Electrical - Switches, Outlets & Fixtures - Install or Repair
+          description: The project that the lead is interested in.  If not provided, the API will retrieve this value from the created lead.
+        homeowner:
+          type: boolean
+          description: Indicator whether or not the lead is a homeowner.  If not provided, the API will retrieve this value from the created lead.
+        cost:
+          type: number
+          example: 2.55
+          description: The cost of the lead
+        allowedTimesSold:
+          type: number
+          example: 3
+          description: Max number of times the lead can be sold
+        returnHashType:
+          type: string
+          enum: [sha1, md5, plain]
+          example: sha1
+          description: Hashes of the matches sent back in response. Must be used together with returnHashValueType
+        returnHashValueType:
+          type: string
+          enum: [email, phone, company, promotionCode, partnerGroup]
+          example: email
+          description: Hashes of the matches sent back in response. Must be used together with returnHashType
+        skipPartnerId:
+          type: string
+          example: 142,1543,225
+          description: List the partners to skip in processing (exclude from being matched). Comma delimited list of values
+        returnBestPrice:
+          type: boolean
+          example: true
+          description: Only matters if vendor is on dynamic pricing
+        srcId:
+          type: string
+          example: 123
+          description: The source id of the lead; if provided, then src is not required
+        testLead:
+          type: boolean
+          example: true
+          description: Only used when testing
+        skipXsl:
+          type: boolean
+          example: true
+          description: Do not include XSL path in XML response
+        matchWithPartnerId:
+          type: string
+          example: 22,456
+          description: Comma separated list with Partner IDs to only match with
+        redirectUrl:
+          type: string
+          example: https://www.yoursite.com
+          description: Set your redirect URL
+        fullUrl:
+          type: string
+          example: Full_URL
+          description: varchar(500)
+        platform:
+          type: string
+          example: Platform
+          description: varchar(50)
+        platformLeadId:
+          type: string
+          example: Platform_Lead_ID
+          description: varchar(36)
+        platformClickId:
+          type: string
+          example: Platform_Click_ID
+          description: varchar(200)
+        originalUniqueIdentifier:
+          type: string
+          example: Original_Unique_Identifier
+          description: varchar(40)
+        subcategory:
+          type: string
+          example: Subcategory
+          description: varchar(100)
+        category:
+          type: string
+          enum:
+            [
+              Appliance,
+              Carpentry,
+              Cleaning,
+              Door,
+              Drywall,
+              Electrical,
+              Exterior Remodeling,
+              Fencing,
+              Fireplace,
+              Flooring,
+              Foundation,
+              Garage,
+              Gutters,
+              HVAC,
+              Interior Remodeling,
+              Lawn,
+              Masonry,
+              Moving,
+              Painting,
+              Paving/Driveway,
+              Pest,
+              Plumbing,
+              Pool,
+              Restoration,
+              Roofing,
+              Security,
+              Solar,
+              Tree,
+              Windows,
+              Yard,
+              Other,
+            ]
+          example: Windows
+          description: Category
+        childLeadId:
+          type: string
+          example: Child_Lead_ID
+          description: varchar(100)
+        var1:
+          type: string
+          example: Var1
+          description: varchar(100)
+        var2:
+          type: string
+          example: Var2
+          description: varchar(100)
+        var3:
+          type: string
+          example: Var3
+          description: varchar(100)
+        var4:
+          type: string
+          example: Var4
+          description: varchar(100)
+        utmNetwork:
+          type: string
+          example: utm_network
+          description: varchar(100)
+        utmDevice:
+          type: string
+          example: utm_device
+          description: varchar(100)
+        utmKeyword:
+          type: string
+          example: utm_keyword
+          description: varchar(100)
+        utmMatchType:
+          type: string
+          example: utm_match_type
+          description: varchar(100)
+        utmCampaignId:
+          type: string
+          example: utm_campaign_id
+          description: varchar(100)
+        utmAdGroupId:
+          type: string
+          example: utm_adgroupid
+          description: varchar(100)
+        utmAdId:
+          type: string
+          example: utm_adid
+          description: varchar(100)
+        utmMedium:
+          type: string
+          example: utm_medium
+          description: varchar(100)
+        utmCampaign:
+          type: string
+          example: utm_campaign
+          description: varchar(100)
+        utmTerm:
+          type: string
+          example: utm_term
+          description: varchar(100)
+        utmContent:
+          type: string
+          example: utm_content
+          description: varchar(100)
+        utmSource:
+          type: string
+          example: utm_source
+          description: varchar(100)
+        manualProjectEdit:
+          type: boolean
+          example: true
+          description: Allow manual project edit
+        cronJobReprocessedTime:
+          type: string
+          example: 12/23/1980 08:12:11
+          description: Valid datetime. m/d/Y H:i:s
+        cronJobReprocessedResult:
+          type: string
+          example: Cron_Job_Reprocessed_Result
+          description: varchar(20)
+        autoMap:
+          type: boolean
+          example: true
+          description: Allow auto map
+        projectValue:
+          type: string
+          enum:
+            [
+              "[child lead]",
+              above_ground_pool_installers,
+              air_conditioning_repair,
+              air_duct_cleaning,
+              air_quality_testing,
+              ant_removal,
+              antenna_installation,
+              antenna_repair,
+              appliance_repair,
+              arborist,
+              armadillo_removal,
+              artificial_grass_installation,
+              asbestos_abatement,
+              asbestos_inspection,
+              asbestos_popcorn_ceiling_removal,
+              asbestos_removal,
+              asbestos_testing,
+              asphalt_driveway_paving,
+              asphalt_milling_services,
+              asphalt_paving,
+              asphalt_repair,
+              asphalt_roofing_installation,
+              asphalt_sealing,
+              asphalt_service,
+              asphalt_shingles_installation,
+              attic_fan_installation,
+              attic_fan_repair,
+              attic_insulation_installation,
+              attic_ladder_installation,
+              attic_remodeling,
+              auto_locksmith,
+              awning_installation,
+              awning_service,
+              backflow_testing,
+              backsplash_installation,
+              banister_repair,
+              barbecue_repair,
+              baseboard_installation,
+              basement_cleaning,
+              basement_drainage_installation,
+              basement_drainage_repair,
+              basement_finishing,
+              basement_french_drain_installation,
+              basement_remodeling,
+              basement_repair,
+              basement_toilet_installation,
+              basement_waterproofing,
+              basketball_hoop_installation,
+              bathroom_fan_installation,
+              bathroom_modification,
+              bathroom_remodeling,
+              bathroom_renovation,
+              bathtub_installation,
+              bathtub_refinishing,
+              bathtub_repair,
+              bathtub_resurfacing,
+              bed_bug_exterminator,
+              bee_hive_removal,
+              bird_nest_removal,
+              blinds_installation,
+              blinds_repair,
+              brick_paint_removal,
+              brick_porch_repair,
+              brick_repair,
+              brick_service,
+              brick_staining,
+              brush_removal,
+              built_in_bookshelves,
+              bulldozer_service,
+              bush_removal,
+              bush_trimming,
+              cabinet_makers,
+              cabinet_painting,
+              cabinet_refacing,
+              cabinet_refinishing,
+              cabinet_remodeling,
+              cabinet_repair,
+              car_locksmith,
+              carpenter,
+              carpet_cleaning,
+              carpet_installation,
+              carpet_removal,
+              carpet_repair,
+              carpet_replacement,
+              carpet_stretching,
+              carport_installation,
+              cat_door_installation,
+              ceiling_fan_installation,
+              ceiling_fan_repair,
+              ceiling_fan_service,
+              ceiling_tile_installation,
+              central_ac_installation,
+              chain_link_fence_installation,
+              chain_link_fence_repair,
+              chair_repair,
+              chandelier_installation,
+              chandelier_repair,
+              chimney_bird_removal_services,
+              chimney_cap_install,
+              chimney_cleaning,
+              chimney_inspection,
+              chimney_repair,
+              chimney_repointing,
+              chimney_service,
+              chimney_sweeping,
+              christmas_light_installation,
+              cistern_installation,
+              cleaners,
+              cleaning_services,
+              commercial_cleaning,
+              commercial_door_repair,
+              commercial_painting,
+              commercial_pressure_washing,
+              commercial_window_tinting,
+              computer_repair,
+              concrete_curbing,
+              concrete_cutting_service,
+              concrete_delivery,
+              concrete_driveway_repair,
+              concrete_edging,
+              concrete_floor_polishing,
+              concrete_floor_repair,
+              concrete_grinding,
+              concrete_leveling,
+              concrete_lifting,
+              concrete_polishing,
+              concrete_pouring,
+              concrete_repair,
+              concrete_restoration_services,
+              concrete_resurfacing,
+              concrete_service,
+              concrete_staining,
+              concrete_stairs_repair,
+              concrete_stamping,
+              concrete_step_repair,
+              concrete_wall_repair,
+              construction_framing,
+              contractors,
+              couch_repair,
+              countertop_installation,
+              countertop_replacement,
+              cracked_sink_repair,
+              crawl_space_service,
+              crawlspace_waterproofing,
+              cross-country_movers,
+              culvert_installation,
+              curtain_installation,
+              custom_bookshelves,
+              custom_home_builder,
+              de-icing,
+              dead_animal_removal,
+              deck_cleaning,
+              deck_construction,
+              deck_contractors,
+              deck_painting,
+              deck_refinishing,
+              deck_repair,
+              deck_restoration,
+              deck_sanding,
+              deck_sealing,
+              deck_staining,
+              demolition_services,
+              dethatching,
+              dirt_installation,
+              dishwasher_installation,
+              dishwasher_repair,
+              dock_construction,
+              dog_door_installation,
+              door_frame_repair,
+              door_installation,
+              door_refinishing,
+              door_repair,
+              door_restoration,
+              doorbell_installation,
+              doorbell_repair,
+              double_hung_window_replacement,
+              downspout_installation,
+              downspout_repair,
+              drain_cleaning,
+              drainage_installation,
+              drapes_installation,
+              driveway_cleaning,
+              driveway_repair,
+              driveway_resurfacing,
+              driveway_sealcoating,
+              drop_ceiling_installation,
+              dryer_repair,
+              dryer_vent_cleaning,
+              dryer_vent_installation,
+              drywall_installation,
+              drywall_repair,
+              duct_insulation,
+              dumpster_rental,
+              egress_window_installation,
+              electrical_contractors,
+              electrical_inspection,
+              electrician,
+              elevator_installation,
+              elevator_repair,
+              emergency_plumber,
+              engineered_hardwood,
+              excavation_service,
+              exhaust_fan_installation,
+              exhaust_fan_repair,
+              exit_sign_installation_services,
+              exterior_waterproofing,
+              faucet_installation,
+              faucet_repair,
+              fence_installation,
+              fence_painting,
+              fence_repair,
+              fence_staining,
+              fiberglass_tub_repair,
+              field_mowing,
+              finish_carpentry,
+              fire_damage_cleanup_service,
+              fire_pit_installation,
+              fireplace_cleaning,
+              fireplace_inspection,
+              fireplace_remodeling,
+              fireplace_repairs,
+              flag_pole_installation,
+              flat_roof_installation,
+              flea_exterminator,
+              floor_demolition,
+              floor_installation,
+              flooring_installation,
+              foundation_contractors,
+              foundation_inspection_service,
+              foundation_jacking,
+              foundation_leveling,
+              foundation_lifting,
+              foundation_repair,
+              foundation_underpinning,
+              framing_carpentry_service,
+              french_drain,
+              french_drain_installation,
+              french_drain_pipe,
+              furnace_repair,
+              furniture_assembly,
+              furniture_cleaning,
+              furniture_movers,
+              furniture_refinishing,
+              furniture_removal,
+              furniture_repair,
+              Furniture_Restoration,
+              furniture_stripping,
+              gable_vent_installation,
+              garage_addition,
+              garage_coating,
+              garage_contractors,
+              garage_conversion,
+              garage_door_installation,
+              garage_door_keypad_installation,
+              garage_door_opener_installation,
+              garage_door_repair,
+              garage_remodel,
+              garbage_disposal_installation,
+              garbage_disposal_repair,
+              gas_fireplace_maintenance,
+              gas_fireplace_repair,
+              gas_grill_repair,
+              gas_line_installation,
+              gas_line_relocation,
+              gas_line_repair,
+              gas_log_fireplace_repair,
+              gate_repair,
+              gazebo_installation,
+              geese_removal,
+              generator_installation,
+              generator_repair,
+              generator_service,
+              glass_and_window_repair,
+              grab_bar_installation,
+              grading_contractors,
+              granite_repair,
+              gravel_delivery,
+              gravel_driveway,
+              gravel_installation,
+              grease_trap_installation,
+              grout_cleaning,
+              grout_repair,
+              grout_sealing,
+              grub_treatment,
+              gutter_cleaning,
+              gutter_covers,
+              gutter_guards,
+              gutter_installation,
+              gutter_leaf_removal,
+              gutter_repair,
+              gutter_replacement,
+              gutter_services,
+              handyman_services,
+              hardie_board_installation,
+              hardie_plank_installation,
+              hardscaping_service,
+              hardwood_floor_refinishing,
+              hardwood_floor_repair,
+              hardwood_flooring_installation,
+              hardwood_flooring_repalcement,
+              hardwood_restoration,
+              heat_pump_repair,
+              heating_and_cooling_services,
+              heating_repair,
+              hedge_cutting,
+              hedge_removal,
+              home_improvement_contractors,
+              home_inspection,
+              home_modification,
+              home_remodeling,
+              home_renovation,
+              home_repair,
+              home_theater_installation,
+              home_theater_setup,
+              home_window_repair,
+              home_window_replacement,
+              hornet_removal_service,
+              hot_tub_installation,
+              hot_tub_movers,
+              hot_tub_removal,
+              hot_tub_repair,
+              house_cleaning,
+              house_framing,
+              house_leveling,
+              house_painters,
+              housekeeping_service,
+              hvac,
+              hydroseeding,
+              ice_removal,
+              inground_pool_installation,
+              insulation_installation,
+              interior_decorator,
+              interior_demolition,
+              interior_designer,
+              irrigation_system_installation,
+              jacuzzi_installation,
+              janitorial_services,
+              japanese_knotweed_removal,
+              junk_hauling,
+              junk_removal,
+              keypad_repair,
+              kitchen_cabinet_painting,
+              kitchen_makeovers,
+              kitchen_remodeling,
+              kitchen_renovation,
+              laminate_floor_installers,
+              land_appraisal,
+              land_leveling,
+              land_surveyors,
+              landscape_architect,
+              landscape_curbing,
+              landscape_design,
+              landscape_drainage,
+              landscape_maintenance,
+              landscape_service,
+              lawn_aeration,
+              lawn_care,
+              lawn_clean_up,
+              lawn_cutting,
+              lawn_drainage,
+              lawn_fertilizing,
+              lawn_maintenance,
+              lawn_mowing,
+              lawn_mowing_service,
+              lawn_service,
+              leach_field_repair,
+              leather_furniture_repair,
+              leather_repair,
+              light_bulb_changing_service,
+              light_switch_wiring,
+              local_movers,
+              locksmith,
+              lot_clearing,
+              lvp_flooring,
+              mailbox_installation,
+              mailbox_repair,
+              marble_polishing_services,
+              masonry_repair_service,
+              mattress_fumigation,
+              metal_roof_installation,
+              microwave_install,
+              mini_split_ac_repair,
+              mini_split_ac_service,
+              mini_split_installation,
+              mirror_hanging,
+              moisture_barrier_installation,
+              mold_inspection,
+              mold_remediation,
+              mold_removal,
+              mole_extermination,
+              mosquito_control_,
+              mosquito_yard_treatment_service,
+              mouse_removal,
+              mowing_service,
+              mudjacking_service,
+              mulch_installation,
+              mulch_service,
+              office_remodeling,
+              oil_furnace_repair,
+              oil_tank_removal_services,
+              outdoor_lighting_installation,
+              oven_cleaning,
+              oven_repair,
+              paint_stripping,
+              palm_tree_trimming,
+              parking_lot_painting,
+              parking_lot_paving,
+              parking_lot_repair,
+              patio_cleaning,
+              patio_repair,
+              paver_installation,
+              pavers_contractors,
+              perc_testing,
+              pergola_repair,
+              perimeter_drain_installation,
+              pest_control,
+              pest_inspection_service,
+              piano_movers,
+              pine_straw_installation,
+              plaster_repair,
+              plaster_wall_repair,
+              plumber,
+              pocket_door_installation_services,
+              poison_ivy_removal,
+              pond_cleaning,
+              pond_maintenance,
+              pool_cleaning,
+              pool_cover_installation,
+              pool_heater_repair,
+              pool_installation,
+              pool_liner_installation,
+              pool_repair,
+              pool_service,
+              pool_table_movers,
+              pool_vacuuming,
+              popcorn_ceiling_removal,
+              porch_repair,
+              post_construction_cleaning_services,
+              pothole_repair,
+              power-washing,
+              power_washing,
+              pressure_washing,
+              privacy_fence_installation,
+              professional_organizers,
+              propane_delivery,
+              property_clearing,
+              rabbit_removal_service,
+              raccoon_removal,
+              radon_remediation_service,
+              radon_testing,
+              rain_gutters_installation,
+              recliner_repair,
+              refacing_cabinets,
+              refrigerator_removal,
+              refrigerator_repair,
+              remodeling_contractors,
+              retaining_wall_installation,
+              retaining_wall_repair,
+              reverse_osmosis_system_installation,
+              road_grading,
+              rodent_control,
+              roof_cleaning,
+              roof_inspection,
+              roof_moss_removal,
+              roof_painters,
+              roof_replacement,
+              roof_tarping,
+              roof_vent_repair,
+              roofers,
+              rug_cleaning,
+              sandblasting_service,
+              satellite_dish_removal,
+              screen_door_installation,
+              screen_door_repair,
+              screen_door_replacement,
+              screen_porch_contractors,
+              screen_porch_repair,
+              security_system_installation,
+              septic_cleaning_service,
+              septic_inspection,
+              septic_installation,
+              septic_service,
+              septic_tank_repair,
+              septic_tank_services,
+              sewer_inspection_services,
+              shake_siding_repair,
+              shed_demolition,
+              shed_removal,
+              shed_repair,
+              sheetrock_repair,
+              shelves_installation,
+              shingle_roof_installation,
+              shower_door_installation,
+              shower_installation,
+              shower_pan_installation,
+              shower_remodel,
+              shower_repair,
+              shrub_removal,
+              shrub_trimming,
+              shutter_painting_service,
+              shutter_repair,
+              sidewalk_repair,
+              siding_cleaning,
+              siding_installation,
+              siding_repair,
+              siding_replacement,
+              sinkhole_repair,
+              skunk_removal,
+              skylight_repair,
+              skylight_replacement,
+              skylights_installation,
+              sliding_glass_door_installation,
+              sliding_glass_door_repair,
+              smart_home_installation,
+              smoke_alarm_repair,
+              smoke_detector_installation,
+              smoke_detector_repair,
+              smoke_detector_replacement,
+              smoke_restoration,
+              snake_control,
+              snake_exterminators,
+              snake_removal,
+              snow_removal,
+              sod_installation,
+              sod_removal,
+              sod_replacement,
+              sofa_disposal,
+              sofa_repair,
+              soffit_cleaning,
+              soffit_installation,
+              soffit_repair,
+              solar_panel_installation,
+              spider_control,
+              spigot_winterization,
+              sprinkler_repair,
+              sprinkler_system_installation,
+              squeaky_floor_repair,
+              squirrel_removal,
+              staircase_remodeling,
+              steam_shower_installation,
+              steam_shower_repair,
+              storefront_tinting,
+              storm_door_installation,
+              structural_beam_repair,
+              structural_engineers,
+              structural_inspection,
+              stucco_repair,
+              stucco_service,
+              stump_grinding,
+              stump_removal_service,
+              sump_pump_installation,
+              sump_pump_repair,
+              sump_pump_replacement,
+              swimming_pool_repair,
+              table_movers,
+              tankless_water_heater_installation,
+              tankless_water_heater_repair,
+              tennis_court_repair,
+              termite_inspection,
+              thermostat_installation,
+              tick_yard_treatment_service,
+              tile_cleaning,
+              tile_installation,
+              tile_regrouting,
+              tile_repair,
+              tile_roofing_repair,
+              toilet_installation,
+              toilet_repair,
+              trailer_roof_repair,
+              trailer_skirting_installation,
+              trash_removal,
+              tree_care,
+              tree_cutting_services,
+              tree_fertilization,
+              tree_limb_removal,
+              tree_planting,
+              tree_removal,
+              tree_root_removal,
+              tree_services,
+              tree_transplanting,
+              tree_trimming,
+              tv_antenna_installation,
+              tv_antenna_installers,
+              tv_mount_installation,
+              tv_repair,
+              upholstery_cleaning,
+              upholstery_repair,
+              vermiculite_insulation_removal,
+              vine_removal,
+              vinyl_fence_installation,
+              vinyl_fence_repair,
+              vinyl_flooring_installation,
+              vinyl_siding_installation,
+              vinyl_siding_repair,
+              vinyl_siding_replacement,
+              vinyl_windows_replacement,
+              walk_in_shower,
+              walk_in_tub,
+              wall_repair_service,
+              wallpaper_installation,
+              wallpaper_removal,
+              washer_repair,
+              washing_machine_repair,
+              wasp_extermination,
+              water_filtration_system_installation,
+              water_heater_installation,
+              water_heater_repair,
+              water_line_installation,
+              water_main_installation,
+              water_restoration,
+              water_softener_installation,
+              weed_pulling,
+              weed_services,
+              welders,
+              well_drilling,
+              well_inspection_service,
+              well_pump_repair,
+              well_service,
+              well_water_testing,
+              wildlife_removal_from_chimneys,
+              window_ac_repair,
+              window_cleaning,
+              window_glass_replacement,
+              window_installation,
+              window_repair,
+              window_restoration,
+              window_screen_repair,
+              window_screen_replacement,
+              window_tinting,
+              window_washing,
+              winter_maintenance,
+              wood_chipping_service,
+              wood_fence_repair,
+              wood_floor_cleaning,
+              wood_floor_refinishing,
+              wood_floor_repair,
+              wood_flooring_installation,
+              wood_refinishing,
+              wood_rot_repair,
+              wood_staining,
+              yard_clean_up_service,
+              yard_drainage,
+              yard_drainage_installation,
+              yard_drainage_solutions,
+              yard_grading,
+              yard_leveling,
+              yard_maintenance,
+              yellow_jacket_removal,
+            ]
+          example: "[child lead]"
+          description: Project value
+        referrer:
+          type: string
+          maxLength: 500
+          example: Referrer
+          description: Referrer
+        loci:
+          type: string
+          maxLength: 10
+          example: loci
+          description: loci
+        locp:
+          type: string
+          maxLength: 10
+          example: locp
+          description: locp
+        childLead:
+          type: boolean
+          example: true
+          description: Indicator whether or not the lead is a child lead
+        subId:
+          type: string
+          maxLength: 300
+          example: 12
+          description: Sub ID
+        pubId:
+          type: string
+          maxLength: 100
+          example: 12345
+          description: Pub ID
+        googleClickId:
+          type: string
+          maxLength: 200
+          example: Google_Click_ID
+          description: Google Click ID
+        optOut:
+          type: string
+          maxLength: 20
+          example: Optout
+          description: Optout
+        uniqueIdentifier:
+          type: string
+          maxLength: 40
+          example: 2606e73c20b345b7915671c7e057c2b3
+          description: Unique Identifier
+        userAgent:
+          type: string
+          maxLength: 500
+          example: Mozilla/5.0
+          description: User Agent
+        maskedTrustedFormUrl:
+          type: string
+          maxLength: 300
+          example: https://cert.trustedform.com/1145b610ac97a
+          description: Masked Trusted Form URL
+        tcpaConsent:
+          type: boolean
+          example: true
+          description: TCPA Consent
+        tcpaLanguage:
+          type: string
+          maxLength: 1000
+          example: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+          description: TCPA Language
+        trustedFormUrl:
+          type: string
+          example: https://www.trustedform.com/123456
+          description: Trusted Form URL
+        leadIdToken:
+          type: string
+          maxLength: 36
+          example: LeadiD_Token
+          description: Lead ID Token
+        address:
+          type: string
+          maxLength: 100
+          example: 1234 Main St.
+          description: Address
+        secondaryPhone:
+          type: string
+          pattern: '^\d{10}$'
+          example: 3125554807
+          description: Valid phone number
+        email:
+          type: string
+          maxLength: 100
+          example: test@nags.us
+          description: Valid email address
+        keyword:
+          type: string
+          maxLength: 75
+          example: Keyword
+          description: Keyword
+        incomingProject:
+          type: string
+          maxLength: 75
+          example: Incoming_Project
+          description: Incoming Project
+        timing:
+          type: string
+          maxLength: 50
+          example: timing
+          description: Timing
+        pest_type:
+          type: string
+          enum:
+            [
+              small_animals,
+              termites,
+              birds_and_bats,
+              bugs_and_insects,
+              bed_bugs,
+              rodents,
+              other,
+            ]
+          example: other
+          description: Type of pest
+        location:
+          type: string
+          maxLength: 30
+          example: location
+          description: Location
+        emerg:
+          type: boolean
+          example: true
+          description: emerg
+        readyToHire:
+          type: boolean
+          example: true
+          description: Ready to hire
+        creditRating:
+          type: string
+          enum: [Poor, Fair, Good, Excellent]
+          example: Excellent
+          description: Credit rating
+        comments:
+          type: string
+          maxLength: 3000
+          example: I have some things I would like to clarify
+          description: Comments
+
+    HomeImprovementChildrenConsentRequest:
+      description: Request containing list of interests that lead consents to be contacted from
+      allOf:
+        - $ref: "#/components/schemas/HomeImprovementLeadConsentRequest"
+
+    MovingLeadConsentRequest:
+      description: Request containing list of interests that lead consents to be contacted from
+      type: object
+      required:
+        - interestIds
+        - src
+        - leadId
+        - leadTypeId
+        - landingPage
+        - ipAddress
+        - firstName
+        - lastName
+        - primaryPhone
+        - email
+        - originZip
+        - destinationZip
+        - estMoveDate
+      properties:
+        interestIds:
+          type: array
+          items:
+            type: string
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadId:
+          type: string
+          example: 3637
+          description: Identifier assigned to the lead
+        leadTypeId:
+          type: string
+          example: 55
+          description: The identifier of the lead type
+        landingPage:
+          type: string
+          description: The site where the lead form was completed
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        firstName:
+          type: string
+          description: First name of the lead
+        lastName:
+          type: string
+          description: Last name of the lead
+        primaryPhone:
+          type: string
+          pattern: '^\d{10}$'
+          example: 4048675309
+          description: The primary phone number of the lead
+        email:
+          type: string
+          maxLength: 100
+          example: test@nags.us
+          description: Valid email address
+        originZip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is moving from
+        destinationZip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is moving to
+        estMoveDate:
+          type: string
+          pattern: '^\d{2}/\d{2}/\d{4}$'
+          example: 12/23/1980
+          description: Estimated move date (mm/dd/yyyy)
+        matchWithPartnerId:
+          type: string
+          example: 22,456
+          description: Comma separated list with Partner IDs to only match with
+        trustedFormUrl:
+          type: string
+          maxLength: 300
+          example: https://www.trustedform.com/123456
+          description: Trusted Form URL
+        destinationCity:
+          type: string
+          maxLength: 100
+          example: Raleigh
+          description: City that the lead is moving to
+        destinationState:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: NC
+          description: State that the lead is moving to
+        originCity:
+          type: string
+          maxLength: 100
+          example: Raleigh
+          description: City that the lead is moving from
+        originState:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: NC
+          description: State that the lead is moving from
+        numberBedrooms:
+          type: string
+          maxLength: 100
+          example: 3
+          description: Number of bedrooms in the current residence
+        tcpaConsent:
+          type: boolean
+          example: true
+          description: TCPA Consent
+        tcpaLanguage:
+          type: string
+          maxLength: 1000
+          example: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+          description: TCPA Language
+        subId:
+          type: string
+          maxLength: 100
+          example: 123456
+          description: Sub ID
+        uniqueIdentifier:
+          type: string
+          maxLength: 40
+          example: 123456
+          description: Unique Identifier
+        fullUrl:
+          type: string
+          maxLength: 500
+          example: https://www.yoursite.com
+          description: Full URL
+
+    SolarLeadConsentRequest:
+      description: Request containing list of interests that lead consents to be contacted from
+      type: object
+      required:
+        - interestIds
+        - src
+        - leadId
+        - leadTypeId
+        - landingPage
+        - ipAddress
+        - tcpa
+        - firstName
+        - lastName
+        - city
+        - state
+        - zip
+        - primaryPhone
+        - email
+        - residenceOwnership
+        - shade
+        - monthlyElectricBill
+        - credit
+        - utilityProvider
+      properties:
+        interestIds:
+          type: array
+          items:
+            type: string
+        src:
+          type: string
+          example: ASPHS
+          description: The source identifier from which the lead is coming from
+        leadId:
+          type: string
+          example: 3637
+          description: Identifier assigned to the lead
+        leadTypeId:
+          type: string
+          example: 53
+          description: The identifier of the lead type
+        landingPage:
+          type: string
+          example: https://www.yoursite.com
+          description: The site where the lead form was completed
+        ipAddress:
+          type: string
+          example: 198.98.90.200
+          description: The IP Address from which the lead is coming from
+        tcpa:
+          type: boolean
+          example: true
+          description: TCPA Consent
+        firstName:
+          type: string
+          example: John
+          description: First name of the lead
+        lastName:
+          type: string
+          example: Smith
+          description: Last name of the lead
+        city:
+          type: string
+          maxLength: 100
+          example: Raleigh
+          description: City that the lead is in
+        state:
+          type: string
+          pattern: "^[A-Z]{2}$"
+          example: NC
+          description: State that the lead is in
+        zip:
+          type: string
+          pattern: '^\d{5}$'
+          example: 27513
+          description: Zip code that the lead is in
+        primaryPhone:
+          type: string
+          pattern: '^\d{10}$'
+          example: 4048675309
+          description: The primary phone number of the lead
+        email:
+          type: string
+          maxLength: 100
+          example: test@nags.us
+          description: Valid email address
+        residenceOwnership:
+          type: string
+          enum: [Own, Rent, NA]
+          example: Own
+          description: Indicator whether the lead owns or rents their residence
+        shade:
+          type: string
+          enum: [No Shade, A Little Shade, A Lot Of Shade, Uncertain, NA]
+          example: No Shade
+          description: Amount of shade the lead has at their residence
+        monthlyElectricBill:
+          type: string
+          enum: [$0-$99, $100-$300, $300+]
+          example: $0-$99
+          description: The monthly electric bill of the lead
+        credit:
+          type: string
+          enum: [Poor, Fair, Good, Excellent, NA]
+          example: Excellent
+          description: Credit rating of the lead
+        utilityProvider:
+          type: string
+          example: Duke Energy Carolinas
+          description: The utility provider of the lead
+        matchWithPartnerId:
+          type: string
+          example: 22,456
+          description: Comma separated list with Partner IDs to only match with
+        address:
+          type: string
+          maxLength: 100
+          example: 1234 Main St.
+          description: Address
+        subId:
+          type: string
+          maxLength: 100
+          example: 12
+          description: Sub ID
+        trustedFormUrl:
+          type: string
+          maxLength: 500
+          example: https://www.trustedform.com/123456
+          description: Trusted Form URL
+        childLead:
+          type: boolean
+          example: true
+          description: Indicator whether or not the lead is a child lead
+        tcpaLanguage:
+          type: string
+          maxLength: 1000
+          example: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+          description: TCPA Language
+        systemType:
+          type: string
+          enum: [Solar, Solar with battery storage]
+          example: Solar
+          description: System Type
+        stories:
+          type: string
+          enum: [Single story, 2 story, 3 story, 4+ story]
+          example: Single story
+          description: Number of stories in the residence
+        roofRepairs:
+          type: string
+          enum: [Roof is fine, Minor repairs, Need to re-roof, Unsure]
+          example: Roof is fine
+          description: Indicator of the condition of the roof
+        roofType:
+          type: string
+          enum:
+            [Metal, Shingles, Concrete Tiles, Clay or terracotta, Ground mount]
+          example: Metal
+          description: Type of roof
+        cost:
+          type: number
+          example: 2.55
+          description: Real number greater than zero
+        uniqueIdentifier:
+          type: string
+          maxLength: 40
+          example: 83647ac6ea473d
+          description: Unique Identifier
+        fullUrl:
+          type: string
+          maxLength: 500
+          example: https://www.yoursite.com
+          description: Full URL
+
+    LeadAuctionResponse:
+      description: List of providers interested in obtaining the lead
+      type: object
+      required:
+        - matched
+      properties:
+        matched:
+          type: boolean
+          description: Indicator whether or not the lead was matched with one or more providers
+        leadId:
+          type: string
+          example: 3637
+          description: Identifier assigned to the lead
+        experience:
+          type: string
+          enum: [standard, no-provider, angi-widget]
+          example: standard
+          description: Experience to provide based on the to provider interested in the lead
+        metadata:
+          description: Metadata that supports the given experience
+          type: object
+          nullable: true
+        providers:
+          type: array
+          description: List of providers interested in obtaining the lead
+          items:
+            properties:
+              interestId:
+                type: string
+                example: 419
+                description: Identifier assigned to the interest that the partner has for obtaining the lead
+              providerName:
+                type: string
+                example: Patrick Enterprises
+                description: Name associated with the provider
+              project:
+                type: string
+                example: Electrical - Switches
+                description: Project associated with the provider
+
+    LeadConsentResponse:
+      description: Response after successfully sending list of partners that the lead consents to being contacted from
+      type: object
+      required:
+        - matched
+      properties:
+        matched:
+          type: boolean
+          description: Indicator whether or not the lead was matched with one or more partners
+
+    LeadErrorResponse:
+      description: Message given if there is some error in the original request
+      type: object
+      properties:
+        message:
+          type: string
+          description: Message associated with the error
+
+    UnauthorizedResponse:
+      description: Message given if there is some error in the original request
+      type: object
+      properties:
+        errors:
+          type: object
+          properties:
+            detail:
+              type: string
+              example: Unauthorized
+              description: Message associated with the error
+
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
